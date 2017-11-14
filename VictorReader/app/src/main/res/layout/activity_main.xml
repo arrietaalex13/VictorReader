@@ -36,4 +36,24 @@
         android:layout_centerHorizontal="true"
         />
 
+    <Button
+        android:id="@+id/btnPlayback"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Playback"
+        android:layout_below="@+id/btnPlay"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        />
+
+    <Button
+        android:id="@+id/btnNavigate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Navigate"
+        android:layout_below="@+id/btnPlayback"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        />
+
 </RelativeLayout>
