@@ -1,6 +1,5 @@
 package com.example.alex.victorreader;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
@@ -9,7 +8,6 @@ import android.os.Environment;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
-import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -21,16 +19,78 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.Locale;
 
+/**
+ * The class where the application runs from.
+ */
 public class MainActivity extends AppCompatActivity {
 
-    TextToSpeech tts;
-    Button record, play, stop, playBack, navigate;
-    MediaRecorder mediaRecorder;
-    MediaPlayer mediaPlayer;
-    Vibrator vib;
-    String audioFile = null;
-    int fileNo, numOfFiles, currentFile;
-    File [] allAudioFiles;
+    /**
+     * Used to read back file names.
+     */
+    private TextToSpeech tts;
+
+    /**
+     * It creates a MediaRecorder object to be used and sets up the destination
+     *  path for the file. It uses the date and time for filename and starts recording, disappears,
+     *  and stops the recording when the stop button is clicked.
+     */
+    private Button record;
+
+    //private Button play;
+
+    /**
+     * This button only appears after the record button has been clicked. It releases
+     *  the MediaRecorder object used and updates the list of audio files to include the
+     *  audio that was just recorded.
+     */
+    private Button stop;
+
+    /**
+     * This is responsible for playing back the audio files recorded. It uses
+     *  the file selected from the navigate button.
+     */
+    private Button playBack;
+
+    /**
+     * It cycles through the list of files and reads the filename aloud that
+     *  could be played back.
+     */
+    private Button navigate;
+
+    /**
+     * Object that allows user to record audio.
+     */
+    private MediaRecorder mediaRecorder;
+
+    /**
+     * Object that allows user to play back audio.
+     */
+    private MediaPlayer mediaPlayer;
+
+
+    //private Vibrator vib;
+
+    /**
+     * Used to name the file to be recorded.
+     */
+    private String audioFile = null;
+
+    private int fileNo;      // Not quite sure. may delete
+
+    /**
+     * The total number of recordings created by the application.
+     */
+    private int numOfFiles;
+
+    /**
+     * The current file to be played back if button is pressed.
+     */
+    private int currentFile;
+
+    /**
+     * Array containing all of the audio files created by the application.
+     */
+    private File [] allAudioFiles; // Contains all of the audio files recorded
 
 
     @Override
@@ -38,17 +98,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        File audioDir = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
-                                 + "/VictorReaderAudio");
-        if(!audioDir.exists() && !audioDir.isDirectory())
-            audioDir.mkdirs();
-
         Refresh();
 
-        // Set up buttons
-        record = (Button) findViewById(R.id.btnRecord);
-        play   = (Button) findViewById(R.id.btnPlay);
-        stop = (Button) findViewById(R.id.btnStop);
+        // Configures buttons to interact with UI
+        record   = (Button) findViewById(R.id.btnRecord);
+        //play     = (Button) findViewById(R.id.btnPlay);
+        stop     = (Button) findViewById(R.id.btnStop);
         playBack = (Button) findViewById(R.id.btnPlayback);
         navigate = (Button) findViewById(R.id.btnNavigate);
 
@@ -58,7 +113,9 @@ public class MainActivity extends AppCompatActivity {
 
         stop.setVisibility(View.INVISIBLE);
 
-        vib = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        // Sets up vibrator to be synced with phones vibrator
+        //vib = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+
         tts = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
 
             @Override
@@ -69,16 +126,24 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        /**
+         * RECORD:
+         * Method that controls what happens when the record button is clicked
+         *  It creates a MediaRecorder object to be used and sets up the destination
+         *  path for the file. It uses the date and time for filename and starts recording
+         *  until the stop button is clicked.
+         */
         record.setOnClickListener(new View.OnClickListener() {
-            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onClick(View v) {
+
+                // Makes stop button visible and record button invisible
                 record.setVisibility(View.INVISIBLE);
                 stop.setVisibility(View.VISIBLE);
 
                 mediaRecorder = new MediaRecorder();
 
-                //Set up MediaRecorder
+                //Sets up MediaRecorder
                 mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
                 mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
                 mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
@@ -101,6 +166,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        /**
+         * STOP:
+         * Method that controls what happens when the stop button is clicked
+         *  This button only appears after the record button has been clicked. It releases
+         *  the MediaRecorder object used and updates the list of audio files to include the
+         *  audio that was just recorded.
+         */
         stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -122,36 +194,44 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Manages text to speech playback
-        play.setOnClickListener(new View.OnClickListener() {
+//        /**
+//         *
+//         */
+//        play.setOnClickListener(new View.OnClickListener() {
+//
+//            @android.support.annotation.RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+//            @Override
+//            public void onClick(View v) {
+//                String name;
+//                File [] files = GetAudioFilenames();
+//
+//                if(fileNo == files.length)
+//                    fileNo = 0;
+//
+//                for(fileNo = 0; fileNo < files.length; fileNo++) {
+//                    name = files[fileNo].getName();
+//                    tts.speak(name, TextToSpeech.QUEUE_FLUSH, null, null);
+//
+//                }
+//
+//                // No delay to start, vib for 50 ms, sleep for 400 ms, vib for 200 ms
+//                long [] pattern = {0, 100, 400, 200};
+//                //((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(VibrationEffect.createOneShot(400, 10));
+//                if(Build.VERSION.SDK_INT >= 26)
+//                    vib.vibrate(VibrationEffect.createOneShot(150, VibrationEffect.DEFAULT_AMPLITUDE));
+//                else
+//                    vib.vibrate(pattern, -1);
+////                tts.speak(testSpeak, TextToSpeech.QUEUE_FLUSH, null, null);
+//
+//            }
+//        });
 
-            @android.support.annotation.RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-            @Override
-            public void onClick(View v) {
-                String name;
-                File [] files = GetAudioFilenames();
-
-                if(fileNo == files.length)
-                    fileNo = 0;
-
-                for(fileNo = 0; fileNo < files.length; fileNo++) {
-                    name = files[fileNo].getName();
-                    tts.speak(name, TextToSpeech.QUEUE_FLUSH, null, null);
-
-                }
-
-                // No delay to start, vib for 50 ms, sleep for 400 ms, vib for 200 ms
-                long [] pattern = {0, 100, 400, 200};
-                //((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(VibrationEffect.createOneShot(400, 10));
-                if(Build.VERSION.SDK_INT >= 26)
-                    vib.vibrate(VibrationEffect.createOneShot(150, VibrationEffect.DEFAULT_AMPLITUDE));
-                else
-                    vib.vibrate(pattern, -1);
-//                tts.speak(testSpeak, TextToSpeech.QUEUE_FLUSH, null, null);
-
-            }
-        });
-
+        /**
+         * PLAYBACK:
+         * Method that controls what happens when the playBack button is clicked
+         *  This is responsible for playing back the audio files recorded. It uses
+         *  the file selected from the navigate button.
+         */
         playBack.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -174,6 +254,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        /**
+         * NAVIGATE:
+         * Method that controls what happens when the navigate button is clicked
+         *  It cycles through the list of files and reads the filename aloud that
+         *  could be played back.
+         */
         navigate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -199,7 +285,10 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    // Checks the VictorReader path and returns all the file names
+    /**
+     * Checks the VictorReader path and returns all the file names
+     * @return An array of all of the recorded files in the directory created by the application
+     */
     private File [] GetAudioFilenames() {
         String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/VictorReaderAudio";
         File dir = new File(path);
@@ -211,11 +300,35 @@ public class MainActivity extends AppCompatActivity {
         return files;
     }
 
-    // Refreshes data in application including number of files
+    /**
+     * Refreshes data in application including number of files and the current file
+     * that the navigation is on.
+     */
     private void Refresh() {
         allAudioFiles = GetAudioFilenames();
         numOfFiles = allAudioFiles.length;
         currentFile = -1;
     }
+
+    /**
+     * Creates directory that will store all of the audio files created using the application
+     */
+    private void CreateDirectory() {
+        File audioDir = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
+                + "/VictorReaderAudio");
+
+        if(!audioDir.exists() && !audioDir.isDirectory())
+            audioDir.mkdirs();
+    }
+
+   /* private Coordinate FindHit() {
+        int i, j;
+
+        for(i = 0; i < array.size; i++) {
+            for(j = 0; j < array.size; j++) {
+        }
+
+        return new Coordinate(i, j);
+    }*/
 
 }

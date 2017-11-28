@@ -10,8 +10,8 @@
     android:layout_width="match_parent" android:layout_height="match_parent">
     <Button
         android:id="@+id/btnRecord"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="100px"
+        android:layout_height="100px"
         android:text="Record"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
@@ -19,37 +19,37 @@
 
     <Button
         android:id="@+id/btnStop"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="100px"
+        android:layout_height="100px"
         android:text="Stop"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
         />
 
-    <Button
-        android:id="@+id/btnPlay"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Play"
-        android:layout_below="@+id/btnRecord"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true"
-        />
+    <!--<Button-->
+        <!--android:id="@+id/btnPlay"-->
+        <!--android:layout_width="wrap_contenta"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="Play"-->
+        <!--android:layout_below="@+id/btnRecord"-->
+        <!--android:layout_centerVertical="true"-->
+        <!--android:layout_centerHorizontal="true"-->
+        <!--/>-->
 
     <Button
         android:id="@+id/btnPlayback"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="100px"
+        android:layout_height="100px"
         android:text="Playback"
-        android:layout_below="@+id/btnPlay"
+        android:layout_below="@+id/btnStop"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
         />
 
     <Button
         android:id="@+id/btnNavigate"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="100px"
+        android:layout_height="100px"
         android:text="Navigate"
         android:layout_below="@+id/btnPlayback"
         android:layout_centerVertical="true"
