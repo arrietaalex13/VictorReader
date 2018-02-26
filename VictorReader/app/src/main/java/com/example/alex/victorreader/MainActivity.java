@@ -13,8 +13,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.GridLayout;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Locale;
@@ -23,6 +26,13 @@ import java.util.Locale;
  * The class where the application runs from.
  */
 public class MainActivity extends AppCompatActivity {
+
+    private final static int ROWS = 2;
+    private final static int COLS = 3;
+
+    private Integer recordTimes;
+    private Integer playbackTimes;
+    private Integer navigationTimes;
 
     /**
      * Used to read back file names.
@@ -67,13 +77,17 @@ public class MainActivity extends AppCompatActivity {
      */
     private MediaPlayer mediaPlayer;
 
-
     //private Vibrator vib;
 
     /**
      * Used to name the file to be recorded.
      */
     private String audioFile = null;
+
+    /**
+     * Used to locate the log file.
+     */
+    private File logFile;
 
     private int fileNo;      // Not quite sure. may delete
 
@@ -90,7 +104,20 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Array containing all of the audio files created by the application.
      */
-    private File [] allAudioFiles; // Contains all of the audio files recorded
+    private File [] allAudioFiles;
+
+    /**
+     * Array containing buttons that will map with the overlay.
+     */
+    public Button [][] btnArray;
+
+    /**
+     * Array containing true/false corresponding to any given button that was clicked.
+     * True for clicked. False for not clicked.
+     */
+    public static boolean [][] clickedArray = new boolean[ROWS][COLS];
+
+    private GridLayout gridLayout;
 
 
     @Override
@@ -98,7 +125,27 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        btnArray = new Button[ROWS][COLS];
+
+        gridLayout = (GridLayout) findViewById(R.id.gridlayout);
+        btnArray[0][0] = (Button) findViewById(R.id.button1);
+        btnArray[0][1] = (Button) findViewById(R.id.button2);
+        btnArray[0][2] = (Button) findViewById(R.id.button3);
+
+
+        InitializeButtonMatrix();
+        //ResetClickedMatrix();
+
+        recordTimes = new Integer(0);
+        playbackTimes = new Integer(0);
+        navigationTimes = new Integer(0);
+
         Refresh();
+
+        // Sets up log file pathname
+        logFile = new File (Environment.getExternalStorageDirectory().getAbsolutePath() +
+                "/VictorReaderAudio/LogFile.txt");
+        ClearFile(logFile);
 
         // Configures buttons to interact with UI
         record   = (Button) findViewById(R.id.btnRecord);
@@ -136,6 +183,7 @@ public class MainActivity extends AppCompatActivity {
         record.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                recordTimes++;
 
                 // Makes stop button visible and record button invisible
                 record.setVisibility(View.INVISIBLE);
@@ -214,7 +262,7 @@ public class MainActivity extends AppCompatActivity {
 //
 //                }
 //
-//                // No delay to start, vib for 50 ms, sleep for 400 ms, vib for 200 ms
+//                // No delay to start, vib for 100 ms, sleep for 400 ms, vib for 200 ms
 //                long [] pattern = {0, 100, 400, 200};
 //                //((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(VibrationEffect.createOneShot(400, 10));
 //                if(Build.VERSION.SDK_INT >= 26)
@@ -236,6 +284,8 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
+                playbackTimes++;
+
                 // Protects against someone pushing playback before navigation
                 if(currentFile == -1)
                     currentFile = 0;
@@ -263,6 +313,7 @@ public class MainActivity extends AppCompatActivity {
         navigate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                navigationTimes++;
                 String toSpeak = "";
                 currentFile++;
 
@@ -283,6 +334,14 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+    }
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        WriteToLog("Record Button:   " + recordTimes.toString());
+        WriteToLog("Playback Button: " + playbackTimes.toString());
+        WriteToLog("Navigate Button: " + navigationTimes.toString());
     }
 
     /**
@@ -321,14 +380,88 @@ public class MainActivity extends AppCompatActivity {
             audioDir.mkdirs();
     }
 
-   /* private Coordinate FindHit() {
-        int i, j;
-
-        for(i = 0; i < array.size; i++) {
-            for(j = 0; j < array.size; j++) {
+    /**
+     * Clears out the file that is passed into the function by writing a blank string to it
+     * @param file The file to be cleared
+     */
+    private void ClearFile(File file) {
+        try {
+            FileOutputStream writer = new FileOutputStream(file);
+            writer.write(("").getBytes());
+            writer.close();
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
         }
 
-        return new Coordinate(i, j);
-    }*/
+    }
+
+    private void WriteToLog(String text) {
+        FileOutputStream output;
+
+        try {
+            // Appends to file
+            output = new FileOutputStream(logFile, true);
+
+            output.write(text.getBytes());
+            output.write("\n".getBytes());
+
+            output.close();
+        }
+        catch(FileNotFoundException e) {
+
+        }
+        catch (IOException e) {
+
+        }
+    }
+
+    private void InitializeButtonMatrix() {
+        int count = 1;
+
+        for(int i = 0; i < ROWS; i++)
+            for(int j = 0; j < COLS; j++)
+                btnArray[i][j].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        switch(v.getId()) {
+                            case R.id.button1 : MainActivity.clickedArray[0][0] = true;
+                                Log.i("PRESSED", "state1: " + MainActivity.clickedArray[0][0]);
+                                break;
+
+                            case R.id.button2 : MainActivity.clickedArray[0][1] = true;
+                                Log.i("PRESSED", "state2: " + MainActivity.clickedArray[0][1]);
+                                break;
+
+
+                            case R.id.button3 : MainActivity.clickedArray[0][2] = true;
+                                Log.i("PRESSED", "state3: " + MainActivity.clickedArray[0][2]);
+                                break;
+
+                            case R.id.button4 : MainActivity.clickedArray[1][0] = true;
+                                Log.i("PRESSED", "state3: " + MainActivity.clickedArray[1][0]);
+                                break;
+
+                            case R.id.button5 : MainActivity.clickedArray[1][1] = true;
+                                Log.i("PRESSED", "state3: " + MainActivity.clickedArray[1][1]);
+                                break;
+
+                            case R.id.button6 : MainActivity.clickedArray[1][2] = true;
+                                Log.i("PRESSED", "state3: " + MainActivity.clickedArray[1][2]);
+                                break;
+                        }
+                    }
+                });
+    }
+
+    private void ResetClickedMatrix() {
+        for(int i = 0; i < ROWS; i++)
+            for(int j = 0; j < COLS; j++)
+                clickedArray[i][j] = false;
+    }
 
 }
+

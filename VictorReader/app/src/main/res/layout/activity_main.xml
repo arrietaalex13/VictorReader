@@ -7,53 +7,115 @@
     tools:context="com.example.alex.victorreader.MainActivity">
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
     <Button
         android:id="@+id/btnRecord"
-        android:layout_width="100px"
-        android:layout_height="100px"
-        android:text="Record"
+        android:layout_width="100dp"
+        android:layout_height="50dp"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
-        />
+        android:text="Record"
+        android:visibility="gone" />
 
     <Button
         android:id="@+id/btnStop"
-        android:layout_width="100px"
-        android:layout_height="100px"
-        android:text="Stop"
-        android:layout_centerVertical="true"
+        android:layout_width="100dp"
+        android:layout_height="50dp"
         android:layout_centerHorizontal="true"
-        />
+        android:layout_centerVertical="true"
+        android:text="Stop"
+        android:visibility="gone" />
 
     <!--<Button-->
-        <!--android:id="@+id/btnPlay"-->
-        <!--android:layout_width="wrap_contenta"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:text="Play"-->
-        <!--android:layout_below="@+id/btnRecord"-->
-        <!--android:layout_centerVertical="true"-->
-        <!--android:layout_centerHorizontal="true"-->
-        <!--/>-->
+    <!--android:id="@+id/btnPlay"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:text="Play"-->
+    <!--android:layout_below="@+id/btnRecord"-->
+    <!--android:layout_centerVertical="true"-->
+    <!--android:layout_centerHorizontal="true"-->
+    <!--/>-->
 
     <Button
         android:id="@+id/btnPlayback"
-        android:layout_width="100px"
-        android:layout_height="100px"
-        android:text="Playback"
+        android:layout_width="100dp"
+        android:layout_height="50dp"
         android:layout_below="@+id/btnStop"
-        android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
-        />
+        android:layout_centerVertical="true"
+        android:text="Playback"
+        android:visibility="gone" />
 
     <Button
         android:id="@+id/btnNavigate"
-        android:layout_width="100px"
-        android:layout_height="100px"
-        android:text="Navigate"
+        android:layout_width="100dp"
+        android:layout_height="50dp"
         android:layout_below="@+id/btnPlayback"
-        android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
-        />
+        android:layout_centerVertical="true"
+        android:text="Navigate"
+        android:visibility="gone" />
+
+    <GridLayout
+        android:id="@+id/gridlayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginEnd="54dp"
+        android:layout_marginRight="54dp"
+        android:visibility="visible">
+
+        <Button
+            android:id="@+id/button1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_column="4"
+            android:layout_row="0"
+            android:text="Button" />
+
+        <Button
+            android:id="@+id/button2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_column="5"
+            android:layout_row="0"
+            android:text="Button" />
+
+        <Button
+            android:id="@+id/button3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_column="6"
+            android:layout_row="0"
+            android:text="Button" />
+
+        <Button
+            android:id="@+id/button4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_column="4"
+            android:layout_row="1"
+            android:text="Button" />
+
+        <Button
+            android:id="@+id/button5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_column="5"
+            android:layout_row="1"
+            android:text="Button" />
+
+        <Button
+            android:id="@+id/button6"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_column="6"
+            android:layout_row="1"
+            android:text="Button" />
+    </GridLayout>
 
 </RelativeLayout>
