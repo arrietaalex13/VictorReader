@@ -128,10 +128,6 @@ public class MainActivity extends AppCompatActivity {
         btnArray = new Button[ROWS][COLS];
 
         gridLayout = (GridLayout) findViewById(R.id.gridlayout);
-        btnArray[0][0] = (Button) findViewById(R.id.button1);
-        btnArray[0][1] = (Button) findViewById(R.id.button2);
-        btnArray[0][2] = (Button) findViewById(R.id.button3);
-
 
         InitializeButtonMatrix();
         //ResetClickedMatrix();
@@ -420,7 +416,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void InitializeButtonMatrix() {
-        int count = 1;
+        btnArray[0][0] = (Button) findViewById(R.id.button1);
+        btnArray[0][1] = (Button) findViewById(R.id.button2);
+        btnArray[0][2] = (Button) findViewById(R.id.button3);
+        btnArray[1][0] = (Button) findViewById(R.id.button4);
+        btnArray[1][1] = (Button) findViewById(R.id.button5);
+        btnArray[1][2] = (Button) findViewById(R.id.button6);
 
         for(int i = 0; i < ROWS; i++)
             for(int j = 0; j < COLS; j++)
