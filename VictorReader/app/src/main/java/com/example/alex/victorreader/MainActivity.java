@@ -1,12 +1,15 @@
 package com.example.alex.victorreader;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Environment;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -14,11 +17,15 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.GridLayout;
+import android.widget.ImageButton;
+import android.widget.TextView;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
@@ -33,6 +40,10 @@ public class MainActivity extends AppCompatActivity {
     private Integer recordTimes;
     private Integer playbackTimes;
     private Integer navigationTimes;
+
+    private static final int REQ_CODE_SPEECH_INPUT = 100;
+    private TextView mVoiceInputTv;
+    private ImageButton mSpeakBtn;
 
     /**
      * Used to read back file names.
@@ -66,6 +77,11 @@ public class MainActivity extends AppCompatActivity {
      *  could be played back.
      */
     private Button navigate;
+
+    /**
+     * Allows Speech to text capabilites
+     */
+    private Button talk;
 
     /**
      * Object that allows user to record audio.
@@ -111,13 +127,18 @@ public class MainActivity extends AppCompatActivity {
      */
     public Button [][] btnArray;
 
+    public Button [] brailleAr;
+
     /**
      * Array containing true/false corresponding to any given button that was clicked.
      * True for clicked. False for not clicked.
      */
     public static boolean [][] clickedArray = new boolean[ROWS][COLS];
 
+    public static boolean [] brailleClickedAr = new boolean[7];
+
     private GridLayout gridLayout;
+    private GridLayout brailleLayout;
 
 
     @Override
@@ -125,23 +146,33 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        btnArray = new Button[ROWS][COLS];
+        //btnArray = new Button[ROWS][COLS];
+        //brailleAr = new Button[7];
 
-        gridLayout = (GridLayout) findViewById(R.id.gridlayout);
+        //gridLayout = (GridLayout) findViewById(R.id.gridlayout);
+//        brailleLayout = (GridLayout) findViewById(R.id.braillelayout);
+//
+//        InitializeBrailleMatrix();
 
-        InitializeButtonMatrix();
+        //InitializeButtonMatrix();
         //ResetClickedMatrix();
+
+        CreateDirectory();
+
+        //mVoiceInputTv = (TextView) findViewById(R.id.voiceInput);
 
         recordTimes = new Integer(0);
         playbackTimes = new Integer(0);
         navigationTimes = new Integer(0);
 
+
         Refresh();
 
         // Sets up log file pathname
         logFile = new File (Environment.getExternalStorageDirectory().getAbsolutePath() +
-                "/VictorReaderAudio/LogFile.txt");
-        ClearFile(logFile);
+                "/LogFile.txt");
+        WriteToLog("Application opened");
+//        ClearFile(logFile);
 
         // Configures buttons to interact with UI
         record   = (Button) findViewById(R.id.btnRecord);
@@ -149,12 +180,11 @@ public class MainActivity extends AppCompatActivity {
         stop     = (Button) findViewById(R.id.btnStop);
         playBack = (Button) findViewById(R.id.btnPlayback);
         navigate = (Button) findViewById(R.id.btnNavigate);
+        talk     = (Button) findViewById(R.id.stt);
 
         //Need to check if any recordings are available, otherwise it crashes
-        if(GetAudioFilenames().length == 0)
-            playBack.setVisibility(View.GONE);
-
-        stop.setVisibility(View.INVISIBLE);
+//        if(GetAudioFilenames().length == 0)
+//            playBack.setVisibility(View.GONE);
 
         // Sets up vibrator to be synced with phones vibrator
         //vib = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
@@ -179,11 +209,14 @@ public class MainActivity extends AppCompatActivity {
         record.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                SimpleDateFormat formatLog = new SimpleDateFormat("MMM-dd  hh:mm a");
+                String dateLog = formatLog.format(Date.parse(new Date(System.currentTimeMillis()).toString()));
+                WriteToLog("\'Record\' clicked on   " + dateLog);
                 recordTimes++;
 
                 // Makes stop button visible and record button invisible
-                record.setVisibility(View.INVISIBLE);
-                stop.setVisibility(View.VISIBLE);
+//                record.setVisibility(View.INVISIBLE);
+//                stop.setVisibility(View.VISIBLE);
 
                 mediaRecorder = new MediaRecorder();
 
@@ -192,10 +225,11 @@ public class MainActivity extends AppCompatActivity {
                 mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
                 mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
 
+                SimpleDateFormat format = new SimpleDateFormat("MMM-dd  hh:mm:ss");
+                String date = format.format(Date.parse(new Date(System.currentTimeMillis()).toString()));
+
                 audioFile = Environment.getExternalStorageDirectory().getAbsolutePath() +
-                            "/VictorReaderAudio/" +
-                            new Date(System.currentTimeMillis()).toString()
-                            + ".3gp";
+                            "/VictorReaderAudio/" + date + ".3gp";
 
                 mediaRecorder.setOutputFile(audioFile);
 
@@ -220,9 +254,12 @@ public class MainActivity extends AppCompatActivity {
         stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                record.setVisibility(View.VISIBLE);
-                stop.setVisibility(View.GONE);
-                playBack.setVisibility(View.VISIBLE);
+                SimpleDateFormat format = new SimpleDateFormat("MMM-dd  hh:mm a");
+                String date = format.format(Date.parse(new Date(System.currentTimeMillis()).toString()));
+                WriteToLog("\'Stop\' clicked on     " + date);
+//                record.setVisibility(View.VISIBLE);
+//                stop.setVisibility(View.GONE);
+//                playBack.setVisibility(View.VISIBLE);
 
                 try {
                     mediaRecorder.stop();
@@ -280,6 +317,9 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
+                SimpleDateFormat format = new SimpleDateFormat("MMM-dd  hh:mm a");
+                String date = format.format(Date.parse(new Date(System.currentTimeMillis()).toString()));
+                WriteToLog("\'Playback\' clicked on " + date);
                 playbackTimes++;
 
                 // Protects against someone pushing playback before navigation
@@ -309,6 +349,9 @@ public class MainActivity extends AppCompatActivity {
         navigate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                SimpleDateFormat format = new SimpleDateFormat("MMM-dd  hh:mm a");
+                String date = format.format(Date.parse(new Date(System.currentTimeMillis()).toString()));
+                WriteToLog("\'Navigate\' clicked on " + date);
                 navigationTimes++;
                 String toSpeak = "";
                 currentFile++;
@@ -329,15 +372,23 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        talk.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startVoiceInput();
+            }
+        });
+
 
     }
     @Override
     protected void onPause() {
         super.onPause();
+        WriteToLog("Application closed");
 
-        WriteToLog("Record Button:   " + recordTimes.toString());
-        WriteToLog("Playback Button: " + playbackTimes.toString());
-        WriteToLog("Navigate Button: " + navigationTimes.toString());
+//        WriteToLog("Record Button:   " + recordTimes.toString());
+//        WriteToLog("Playback Button: " + playbackTimes.toString());
+//        WriteToLog("Navigate Button: " + navigationTimes.toString());
     }
 
     /**
@@ -369,31 +420,32 @@ public class MainActivity extends AppCompatActivity {
      * Creates directory that will store all of the audio files created using the application
      */
     private void CreateDirectory() {
+        Log.i("DIR: ", "In directory method");
         File audioDir = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
                 + "/VictorReaderAudio");
 
-        if(!audioDir.exists() && !audioDir.isDirectory())
-            audioDir.mkdirs();
+        if(!audioDir.exists() && !audioDir.isDirectory()) {
+            audioDir.mkdirs(); Log.i("DIR: ", "Created directory"); }
     }
 
     /**
      * Clears out the file that is passed into the function by writing a blank string to it
      * @param file The file to be cleared
      */
-    private void ClearFile(File file) {
-        try {
-            FileOutputStream writer = new FileOutputStream(file);
-            writer.write(("").getBytes());
-            writer.close();
-        }
-        catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
+//    private void ClearFile(File file) {
+//        try {
+//            FileOutputStream writer = new FileOutputStream(file);
+//            writer.write(("").getBytes());
+//            writer.close();
+//        }
+//        catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//        catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//    }
 
     private void WriteToLog(String text) {
         FileOutputStream output;
@@ -408,60 +460,188 @@ public class MainActivity extends AppCompatActivity {
             output.close();
         }
         catch(FileNotFoundException e) {
-
+            e.printStackTrace();
         }
         catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+//    private void InitializeBrailleMatrix() {
+//        brailleAr[0] = (Button) findViewById(R.id.button7);
+//        brailleAr[1] = (Button) findViewById(R.id.button8);
+//        brailleAr[2] = (Button) findViewById(R.id.button9);
+//        brailleAr[3] = (Button) findViewById(R.id.button10);
+//        brailleAr[4] = (Button) findViewById(R.id.button11);
+//        brailleAr[5] = (Button) findViewById(R.id.button12);
+//        brailleAr[6] = (Button) findViewById(R.id.button13);
+//
+//        for(int i = 0; i < 7; i++) {
+//            brailleAr[i].setOnClickListener(new View.OnClickListener() {
+//                    @Override
+//                    public void onClick(View v) {
+//                        switch(v.getId()) {
+//                            case R.id.button7 : MainActivity.brailleClickedAr[0] = true;
+//                                Log.i("PRESSED", "state1: " + MainActivity.clickedArray[0][0]);
+//                                break;
+//
+//                            case R.id.button8 : MainActivity.brailleClickedAr[1] = true;
+//                                Log.i("PRESSED", "state2: " + MainActivity.clickedArray[0][1]);
+//                                break;
+//
+//
+//                            case R.id.button9 : MainActivity.brailleClickedAr[2] = true;
+//                                Log.i("PRESSED", "state3: " + MainActivity.clickedArray[0][2]);
+//                                break;
+//
+//                            case R.id.button10 : MainActivity.brailleClickedAr[3] = true;
+//                                Log.i("PRESSED", "state3: " + MainActivity.clickedArray[1][0]);
+//                                break;
+//
+//                            case R.id.button11 : MainActivity.brailleClickedAr[4] = true;
+//                                Log.i("PRESSED", "state3: " + MainActivity.clickedArray[1][1]);
+//                                break;
+//
+//                            case R.id.button12 : MainActivity.brailleClickedAr[5] = true;
+//                                Log.i("PRESSED", "state3: " + MainActivity.clickedArray[1][2]);
+//                                break;
+//
+//                            case R.id.button13 : MainActivity.brailleClickedAr[6] = true;
+//                                Log.i("PRESSED", "state3: " + MainActivity.clickedArray[1][2]);
+//
+//                        }
+//                    }
+//                });
+//
+//        }
+//    }
+
+//    private void InitializeButtonMatrix() {
+//        btnArray[0][0] = (Button) findViewById(R.id.button1);
+//        btnArray[0][1] = (Button) findViewById(R.id.button2);
+//        btnArray[0][2] = (Button) findViewById(R.id.button3);
+//        btnArray[1][0] = (Button) findViewById(R.id.button4);
+//        btnArray[1][1] = (Button) findViewById(R.id.button5);
+//        btnArray[1][2] = (Button) findViewById(R.id.button6);
+//
+//        for(int i = 0; i < ROWS; i++)
+//            for(int j = 0; j < COLS; j++)
+//                btnArray[i][j].setOnClickListener(new View.OnClickListener() {
+//                    @Override
+//                    public void onClick(View v) {
+//                        switch(v.getId()) {
+//                            case R.id.button1 : MainActivity.clickedArray[0][0] = true;
+//                                Log.i("PRESSED", "state1: " + MainActivity.clickedArray[0][0]);
+//                                break;
+//
+//                            case R.id.button2 : MainActivity.clickedArray[0][1] = true;
+//                                Log.i("PRESSED", "state2: " + MainActivity.clickedArray[0][1]);
+//                                break;
+//
+//
+//                            case R.id.button3 : MainActivity.clickedArray[0][2] = true;
+//                                Log.i("PRESSED", "state3: " + MainActivity.clickedArray[0][2]);
+//                                break;
+//
+//                            case R.id.button4 : MainActivity.clickedArray[1][0] = true;
+//                                Log.i("PRESSED", "state3: " + MainActivity.clickedArray[1][0]);
+//                                break;
+//
+//                            case R.id.button5 : MainActivity.clickedArray[1][1] = true;
+//                                Log.i("PRESSED", "state3: " + MainActivity.clickedArray[1][1]);
+//                                break;
+//
+//                            case R.id.button6 : MainActivity.clickedArray[1][2] = true;
+//                                Log.i("PRESSED", "state3: " + MainActivity.clickedArray[1][2]);
+//                        }
+//                    }
+//                });
+//    }
+
+//    private void ResetClickedMatrix() {
+//        for(int i = 0; i < ROWS; i++)
+//            for(int j = 0; j < COLS; j++)
+//                clickedArray[i][j] = false;
+//
+//        for(int i = 0; i < 7; i++)
+//            brailleClickedAr[i] = false;
+//    }
+
+//    private void checkLetter() {
+//        char letter;
+//        if(brailleClickedAr[2]) letter = 'a';
+//        else if(brailleClickedAr[1] && brailleClickedAr[2]) letter ='b';
+//        else if(brailleClickedAr[2] && brailleClickedAr[4]) letter ='c';
+//        else if(brailleClickedAr[2] && brailleClickedAr[4] && brailleClickedAr[5]) letter ='d';
+//        else if(brailleClickedAr[2] && brailleClickedAr[5]) letter ='e';
+//        else if(brailleClickedAr[1] && brailleClickedAr[2] && brailleClickedAr[4]) letter ='f';
+//        else if(brailleClickedAr[1] && brailleClickedAr[2]
+//                && brailleClickedAr[4] && brailleClickedAr[5]) letter ='g';
+//        else if(brailleClickedAr[1] && brailleClickedAr[2] && brailleClickedAr[5]) letter ='h';
+//        else if(brailleClickedAr[1] && brailleClickedAr[4]) letter ='i';
+//        else if(brailleClickedAr[1] && brailleClickedAr[4] && brailleClickedAr[5]) letter ='j';
+//        else if(brailleClickedAr[0] && brailleClickedAr[2]) letter ='k';
+//        else if(brailleClickedAr[0] && brailleClickedAr[1] && brailleClickedAr[2]) letter ='l';
+//        else if(brailleClickedAr[0] && brailleClickedAr[2] && brailleClickedAr[4]) letter ='m';
+//        else if(brailleClickedAr[0] && brailleClickedAr[2]
+//                && brailleClickedAr[4] && brailleClickedAr[5]) letter ='n';
+//        else if(brailleClickedAr[0] && brailleClickedAr[2] && brailleClickedAr[5]) letter ='o';
+//        else if(brailleClickedAr[0] && brailleClickedAr[1]
+//                && brailleClickedAr[2] && brailleClickedAr[4]) letter ='p';
+//        else if(brailleClickedAr[0] && brailleClickedAr[1]
+//                && brailleClickedAr[2] && brailleClickedAr[4] && brailleClickedAr[5]) letter ='q';
+//        else if(brailleClickedAr[0] && brailleClickedAr[1]
+//                && brailleClickedAr[2] && brailleClickedAr[5]) letter ='r';
+//        else if(brailleClickedAr[0] && brailleClickedAr[1] && brailleClickedAr[4]) letter ='s';
+//        else if(brailleClickedAr[0] && brailleClickedAr[1]
+//                && brailleClickedAr[4] && brailleClickedAr[5]) letter ='t';
+//        else if(brailleClickedAr[0] && brailleClickedAr[2] && brailleClickedAr[6]) letter ='u';
+//        else if(brailleClickedAr[0] && brailleClickedAr[1]
+//                && brailleClickedAr[2] && brailleClickedAr[6]) letter ='v';
+//        else if(brailleClickedAr[1] && brailleClickedAr[4]
+//                && brailleClickedAr[5] && brailleClickedAr[6]) letter ='w';
+//        else if(brailleClickedAr[0] && brailleClickedAr[2]
+//                && brailleClickedAr[4] && brailleClickedAr[6]) letter ='x';
+//        else if(brailleClickedAr[0] && brailleClickedAr[2]
+//                && brailleClickedAr[4] && brailleClickedAr[5] && brailleClickedAr[6]) letter ='y';
+//        else if(brailleClickedAr[0] && brailleClickedAr[2]
+//                && brailleClickedAr[5] && brailleClickedAr[6]) letter ='z';
+//        else letter =' ';
+//
+//        ResetClickedMatrix();
+//
+//    }
+
+    private void startVoiceInput() {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Hello, How can I help you?");
+        try {
+            startActivityForResult(intent, REQ_CODE_SPEECH_INPUT);
+        } catch (ActivityNotFoundException a) {
 
         }
     }
 
-    private void InitializeButtonMatrix() {
-        btnArray[0][0] = (Button) findViewById(R.id.button1);
-        btnArray[0][1] = (Button) findViewById(R.id.button2);
-        btnArray[0][2] = (Button) findViewById(R.id.button3);
-        btnArray[1][0] = (Button) findViewById(R.id.button4);
-        btnArray[1][1] = (Button) findViewById(R.id.button5);
-        btnArray[1][2] = (Button) findViewById(R.id.button6);
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case REQ_CODE_SPEECH_INPUT: {
 
-        for(int i = 0; i < ROWS; i++)
-            for(int j = 0; j < COLS; j++)
-                btnArray[i][j].setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        switch(v.getId()) {
-                            case R.id.button1 : MainActivity.clickedArray[0][0] = true;
-                                Log.i("PRESSED", "state1: " + MainActivity.clickedArray[0][0]);
-                                break;
+                if (resultCode == RESULT_OK && null != data) {
+                    ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                    //mVoiceInputTv.setText(result.get(0));
+                    WriteToLog("Speech to Text: " + result.get(0));
+                }
+                else {
+                    WriteToLog("Speech to Text: Failed");
+                }
+                break;
+            }
 
-                            case R.id.button2 : MainActivity.clickedArray[0][1] = true;
-                                Log.i("PRESSED", "state2: " + MainActivity.clickedArray[0][1]);
-                                break;
-
-
-                            case R.id.button3 : MainActivity.clickedArray[0][2] = true;
-                                Log.i("PRESSED", "state3: " + MainActivity.clickedArray[0][2]);
-                                break;
-
-                            case R.id.button4 : MainActivity.clickedArray[1][0] = true;
-                                Log.i("PRESSED", "state3: " + MainActivity.clickedArray[1][0]);
-                                break;
-
-                            case R.id.button5 : MainActivity.clickedArray[1][1] = true;
-                                Log.i("PRESSED", "state3: " + MainActivity.clickedArray[1][1]);
-                                break;
-
-                            case R.id.button6 : MainActivity.clickedArray[1][2] = true;
-                                Log.i("PRESSED", "state3: " + MainActivity.clickedArray[1][2]);
-                                break;
-                        }
-                    }
-                });
-    }
-
-    private void ResetClickedMatrix() {
-        for(int i = 0; i < ROWS; i++)
-            for(int j = 0; j < COLS; j++)
-                clickedArray[i][j] = false;
+        }
     }
 
 }
