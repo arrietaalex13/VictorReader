@@ -159,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
 
         CreateDirectory();
 
-        //mVoiceInputTv = (TextView) findViewById(R.id.voiceInput);
+        mVoiceInputTv = (TextView) findViewById(R.id.voiceInput);
 
         recordTimes = new Integer(0);
         playbackTimes = new Integer(0);
@@ -167,6 +167,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         Refresh();
+        mVoiceInputTv.setText("Welcome!");
 
         // Sets up log file pathname
         logFile = new File (Environment.getExternalStorageDirectory().getAbsolutePath() +
@@ -209,36 +210,43 @@ public class MainActivity extends AppCompatActivity {
         record.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SimpleDateFormat formatLog = new SimpleDateFormat("MMM-dd  hh:mm a");
-                String dateLog = formatLog.format(Date.parse(new Date(System.currentTimeMillis()).toString()));
-                WriteToLog("\'Record\' clicked on   " + dateLog);
-                recordTimes++;
+                try {
 
-                // Makes stop button visible and record button invisible
+
+                    SimpleDateFormat formatLog = new SimpleDateFormat("MMM-dd  hh:mm a");
+                    String dateLog = formatLog.format(Date.parse(new Date(System.currentTimeMillis()).toString()));
+                    WriteToLog("\'Record\' clicked on   " + dateLog);
+                    recordTimes++;
+
+                    // Makes stop button visible and record button invisible
 //                record.setVisibility(View.INVISIBLE);
 //                stop.setVisibility(View.VISIBLE);
 
-                mediaRecorder = new MediaRecorder();
+                    mediaRecorder = new MediaRecorder();
 
-                //Sets up MediaRecorder
-                mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-                mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-                mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+                    //Sets up MediaRecorder
+                    mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+                    mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+                    mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
 
-                SimpleDateFormat format = new SimpleDateFormat("MMM-dd  hh:mm:ss");
-                String date = format.format(Date.parse(new Date(System.currentTimeMillis()).toString()));
+                    SimpleDateFormat format = new SimpleDateFormat("MMM-dd  hh:mm:ss");
+                    String date = format.format(Date.parse(new Date(System.currentTimeMillis()).toString()));
 
-                audioFile = Environment.getExternalStorageDirectory().getAbsolutePath() +
+                    audioFile = Environment.getExternalStorageDirectory().getAbsolutePath() +
                             "/VictorReaderAudio/" + date + ".3gp";
 
-                mediaRecorder.setOutputFile(audioFile);
+                    mediaRecorder.setOutputFile(audioFile);
 
-                try {
-                    mediaRecorder.prepare();
-                    mediaRecorder.start();
-                } catch (IOException e) {
+                    try {
+                        mediaRecorder.prepare();
+                        mediaRecorder.start();
+                    } catch (IOException e) {
 
-                    e.printStackTrace();
+                        e.printStackTrace();
+                    }
+                } catch(Exception e) {
+                    Log.i("Record Error", "ititt");
+                    WriteToLog("Record Error");
                 }
 
             }
@@ -254,24 +262,28 @@ public class MainActivity extends AppCompatActivity {
         stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SimpleDateFormat format = new SimpleDateFormat("MMM-dd  hh:mm a");
-                String date = format.format(Date.parse(new Date(System.currentTimeMillis()).toString()));
-                WriteToLog("\'Stop\' clicked on     " + date);
+                try {
+                    SimpleDateFormat format = new SimpleDateFormat("MMM-dd  hh:mm a");
+                    String date = format.format(Date.parse(new Date(System.currentTimeMillis()).toString()));
+                    WriteToLog("\'Stop\' clicked on     " + date);
 //                record.setVisibility(View.VISIBLE);
 //                stop.setVisibility(View.GONE);
 //                playBack.setVisibility(View.VISIBLE);
 
-                try {
-                    mediaRecorder.stop();
-                }
-                catch (RuntimeException e) {
-                    e.printStackTrace();
-                }
+                    try {
+                        mediaRecorder.stop();
+                    } catch (RuntimeException e) {
+                        e.printStackTrace();
+                    }
 
-                mediaRecorder.release();
-                mediaRecorder = null;
+                    mediaRecorder.release();
+                    mediaRecorder = null;
 
-                Refresh();
+                    Refresh();
+                } catch(Exception e) {
+                    Log.i("Stop Error", "asasas");
+                    WriteToLog("Stop Error");
+                }
             }
         });
 
@@ -326,17 +338,21 @@ public class MainActivity extends AppCompatActivity {
                 if(currentFile == -1)
                     currentFile = 0;
 
-                mediaPlayer = new MediaPlayer();
                 try {
-                    mediaPlayer.setDataSource("file://" + allAudioFiles[currentFile].getAbsolutePath());
-                    mediaPlayer.prepare();
-                    mediaPlayer.start();
+                    mediaPlayer = new MediaPlayer();
+                    try {
+                        mediaPlayer.setDataSource("file://" + allAudioFiles[currentFile].getAbsolutePath());
+                        mediaPlayer.prepare();
+                        mediaPlayer.start();
 
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    mediaPlayer = null;
+                } catch(Exception e) {
+                    WriteToLog("Playback pushed without file loaded");
                 }
-
-                mediaPlayer = null;
             }
         });
 
@@ -359,9 +375,11 @@ public class MainActivity extends AppCompatActivity {
                 if(numOfFiles == 0)
                     toSpeak = "Sorry, you don't have any files to play.";
                 else if(numOfFiles > 0 && currentFile < numOfFiles)
-                    toSpeak = allAudioFiles[currentFile].getName();
+//                    toSpeak = allAudioFiles[currentFile].getName();
+                    toSpeak = "File " + currentFile;
                 else if(currentFile == numOfFiles) {
-                    toSpeak = allAudioFiles[0].getName();
+//                    toSpeak = allAudioFiles[0].getName();
+                    toSpeak = "File " + 0;
                     currentFile = -1;
                 }
 
@@ -414,6 +432,13 @@ public class MainActivity extends AppCompatActivity {
         allAudioFiles = GetAudioFilenames();
         numOfFiles = allAudioFiles.length;
         currentFile = -1;
+
+//        String str = new String();
+//
+//        for(int i = 0; i < allAudioFiles.length; i++)
+//            str += allAudioFiles[i].getName() + ", ";
+//
+//        mVoiceInputTv.setText(str);
     }
 
     /**
@@ -632,7 +657,7 @@ public class MainActivity extends AppCompatActivity {
 
                 if (resultCode == RESULT_OK && null != data) {
                     ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-                    //mVoiceInputTv.setText(result.get(0));
+                    mVoiceInputTv.setText(result.get(0));
                     WriteToLog("Speech to Text: " + result.get(0));
                 }
                 else {
