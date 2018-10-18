@@ -83,6 +83,8 @@ public class MainActivity extends AppCompatActivity {
      */
     private Button talk;
 
+    private Button delete;
+
     /**
      * Object that allows user to record audio.
      */
@@ -182,6 +184,7 @@ public class MainActivity extends AppCompatActivity {
         playBack = (Button) findViewById(R.id.btnPlayback);
         navigate = (Button) findViewById(R.id.btnNavigate);
         talk     = (Button) findViewById(R.id.stt);
+        delete   = (Button) findViewById(R.id.btnDelete);
 
         //Need to check if any recordings are available, otherwise it crashes
 //        if(GetAudioFilenames().length == 0)
@@ -211,7 +214,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 try {
-
+                    mVoiceInputTv.setText("Recording...");
 
                     SimpleDateFormat formatLog = new SimpleDateFormat("MMM-dd  hh:mm a");
                     String dateLog = formatLog.format(Date.parse(new Date(System.currentTimeMillis()).toString()));
@@ -334,25 +337,26 @@ public class MainActivity extends AppCompatActivity {
                 WriteToLog("\'Playback\' clicked on " + date);
                 playbackTimes++;
 
-                // Protects against someone pushing playback before navigation
-                if(currentFile == -1)
-                    currentFile = 0;
-
-                try {
-                    mediaPlayer = new MediaPlayer();
+                if(allAudioFiles.length != 0) {
                     try {
-                        mediaPlayer.setDataSource("file://" + allAudioFiles[currentFile].getAbsolutePath());
-                        mediaPlayer.prepare();
-                        mediaPlayer.start();
+                        mediaPlayer = new MediaPlayer();
+                        try {
+                            mVoiceInputTv.setText("Playing file " + currentFile);
+                            mediaPlayer.setDataSource("file://" + allAudioFiles[currentFile].getAbsolutePath());
+                            mediaPlayer.prepare();
+                            mediaPlayer.start();
 
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        mediaPlayer = null;
+                    } catch (Exception e) {
+                        WriteToLog("Playback pushed without file loaded");
                     }
-
-                    mediaPlayer = null;
-                } catch(Exception e) {
-                    WriteToLog("Playback pushed without file loaded");
                 }
+                else
+                    mVoiceInputTv.setText("No files to play.");
             }
         });
 
@@ -380,9 +384,9 @@ public class MainActivity extends AppCompatActivity {
                 else if(currentFile == numOfFiles) {
 //                    toSpeak = allAudioFiles[0].getName();
                     toSpeak = "File " + 0;
-                    currentFile = -1;
+                    currentFile = 0;
                 }
-
+                UpdateTextView();
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
                     tts.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null, null);
@@ -394,6 +398,23 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 startVoiceInput();
+            }
+        });
+
+        delete.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                SimpleDateFormat format = new SimpleDateFormat("MMM-dd  hh:mm a");
+                String date = format.format(Date.parse(new Date(System.currentTimeMillis()).toString()));
+                WriteToLog("\'Delete\' clicked on   " + date);
+                if(allAudioFiles.length !=0) {
+                    allAudioFiles[currentFile].delete();
+                    mVoiceInputTv.setText("Deleted file " + currentFile);
+                    Refresh();
+                }
+                else
+                    mVoiceInputTv.setText("No file to delete.");
             }
         });
 
@@ -431,8 +452,9 @@ public class MainActivity extends AppCompatActivity {
     private void Refresh() {
         allAudioFiles = GetAudioFilenames();
         numOfFiles = allAudioFiles.length;
-        currentFile = -1;
+        currentFile = allAudioFiles.length-1;
 
+        UpdateTextView();
 //        String str = new String();
 //
 //        for(int i = 0; i < allAudioFiles.length; i++)
@@ -489,6 +511,13 @@ public class MainActivity extends AppCompatActivity {
         }
         catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void UpdateTextView() {
+        if(allAudioFiles.length != 0) {
+            mVoiceInputTv.setText("File " + currentFile + " of " + (allAudioFiles.length - 1));
+            mVoiceInputTv.append("\nFilename: " + allAudioFiles[currentFile].getName());
         }
     }
 
